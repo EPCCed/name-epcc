@@ -31,15 +31,22 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
   <section>
     <h4> Overview </h4>
 
-    <ul style = "font-size: 80%; display: block; float: left; width: 100%">
-      <li> What does NAME look like? </li>
+    <ul style = "font-size: 76%; display: block; float: left; width: 100%">
+      <li> What's in a NAME? </li>
         <ul class = "inner">
-          <li> The view from here...</li>
+          <li> A schematic overview </li>
+          <li> Particles and sub-grid-scale (Lagrangian) motion </li>
+          <li> (Eulerian) Chemistry </li>
         </ul>
-      <li> Parallelism: a quick overview </li>
+      <li> Parallelism:  </li>
         <ul class = "inner">
-          <li> Shared memory and distributed memory</li>
-         <li> ...and how these work in NAME...</li>
+          <li> Existing threaded parallelism (particle decomposition) </li>
+          <li> Distributed particle decomposition </li>
+          <li> Distributed domain decomposition </li>
+        </ul>
+      <li> Development/Test Strategy </li>
+        <ul class = "inner">
+        <li> A "staged de-replication" </li>
         </ul>
       <li> Results </li>
         <ul class = "inner">
@@ -60,27 +67,55 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
 
   </section>
 
-
   <section>
-    <h4>Parallelism</h4>
+    <h4> Mixed Lagrangian... </h4>
 
-    <ul style = "font-size: 80%; display: block; float: left; width: 100%">
-      <li> Shared memory ("threads") </li>
+    <img src = "Eyjafjallajokull-April-17.jpg"
+         alt = "Eyjafjallajokull Eruption April 2010 (Photo: Arni Frioriksson)"
+         width = "90%"
+         class = "plain">
+
+
+    <ul style = "font-size: 75%; display: block; float: left; width: 100%">
+      <li> Particle motion </li>
         <ul class = "inner">
-          <li> Pros: "easy"; incremental </li>
-          <li> Cons: limits you to 1 node; efficiency can be elusive
-          <li> Standard model: OpenMP
-          <li> Compiler chops up loops </li>
+          <li> Advected by background wind field </li>
+          <li> Other processes including convection/plume effects </li>
+          <li> Random motion to represent turbulent scales not resolved </li>
         </ul>
-      <li> Distributed memory ("processes" or "tasks")</li>
+      <li> Statistics </li>
         <ul class = "inner">
-          <li> Pros: allows larger problems; better time-to-solution </li>
-          <li> Cons: incremental development more difficult </li>
-          <li> Standard model: Message Passing Interface (MPI) </li>
-          <li> Programmer must distribute work </li>
+           <li> Accuracy requires sufficient number of (pseudo-)particles </li>
+           <li> Higher resolution requires more particles </li>
         </ul>
     </ul>
 
+  </section>
+
+  <section>
+
+    <h4> ...Eulerian </h4>
+
+    <img src = "chemistry.jpg"
+         alt = "Schemeatic of Lagrangian to Eulerian conversion for Chemistry"
+         width = "90%"
+         class = "plain">
+
+
+    <ul style = "font-size: 75%; display: block; float: left; width: 100%">
+
+      <li> Particles</li>
+        <ul class = "inner">
+          <li> Each carry a payload of chemical constituents </li>
+          <li> Require a sum to give a concentration at given location</li>
+        </ul>
+      <li> Chemistry </li>
+        <ul class = "inner">
+           <li> A "black box" which is entirely local to a single Eulerian cell </li>
+           <li> Concentrations must be "re-distributed" to particles</li>
+           <li> A separate Eulerian advection facility is not considered here</li>
+        </ul>
+    </ul>
 
   </section>
 
@@ -106,6 +141,34 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
 
   </section>
 
+
+  <section>
+    <h4> Particle data structure</h4>
+
+    <pre><code class = "fortran" data-trim data-noescape>
+       type (Particle_)
+         integer (int64)        :: iUP     ! unique identifier
+         real    (pos_t)        :: x(3)    ! position
+         integer (int32)        :: iCoord  ! coordinate system
+         <p class = "fragment" style = "margin: 0px;">  integer (int64)        :: rng(2)  ! RNG state</p>
+         ...
+         type (Extra_), pointer :: extra   ! optional extra data
+         double  (real64)       :: mass(:) ! chemical species
+       end type Particle_
+    </code></pre>
+
+  <p style = "font-size: 80%">
+  Memory requirement
+  </p>
+  <pre><code class = "fortran" data-trim>
+    Particle_  ! c. 128 bytes
+    Extra_     ! c. 400 bytes (if required)
+    mass(:)    ! typically 42 species (if required)
+  </code></pre>
+
+  </section>
+
+
   <section>
     <h4> Output </h4>
     <p style = "font-size: 80%"> Particles may contribute to output... </p>
@@ -116,26 +179,19 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
 
   </section>
 
-
   <section>
 
-     <img width = "80%"
-          src = "https://upload.wikimedia.org/wikipedia/commons/9/97/Caricature_gillray_plumpudding.jpg"
-          alt = "James Gillray cartoon showing Pitt and Napoleon">
+    <h4> Distributed particle decomposition </h4>
 
-      <br>
-      <p style = "font-size: 30%; text-align: center;">
-         Reference: https://upload.wikimedia.org/wikipedia/commons/9/97/Caricature_gillray_plumpudding.jpg </p> 
-
-  </section>
-
-  <section>
-    <h4> Distributed parallelism (1) </h4>
-
-    <p style = "font-size: 80%"> A copy of the source generates a subset of particles... </p>
+    <p style = "font-size: 80%"> A copy of the source generates all particles... </p>
 
     <img src = "./array3.svg" alt = "Particles distributed between tasks"
          class = "plain">
+
+
+    <p style = "font-size: 80%; margin-left: 0em">
+    Particles assigned to MPI task based on unique index <code>iUP</code>
+    </p>
 
     <p style = "font-size: 80%; margin: 0em"> Update particles... </p>
 
@@ -147,8 +203,24 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
 
   </section>
 
+  <section>
+    <h4> Greenhouse Gas Benchmark </h4>
+
+    <ul style = "font-size: 70%; display: block; float: left; width: 100%">
+       <li> UK plus surrounding region (backwards in time)
+        <ul class = "inner">
+          <li> NWP data: 1.5km, 57 vertical levels at 1 hour </li>
+          <li> Original 480,000 particles (c. 30 minutes 1 node); 48 million < 4 hours </li>
+        </ul>
+    </ul>
+
+    <img width = "90%" src = "./fig-bench-greenhouse.svg"
+         alt = "Efficiency for different problem size" class = "plain">
+
+  </section>
 
   <section>
+
     <h4> Output (again)</h4>
     <p style = "font-size: 80%"> Particles may contribute to output... </p>
 
@@ -158,79 +230,12 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
     <dl class = "fragment" style = "font-size: 80%; font-weight: normal; margin: 0em">
     <dt style = "font-weight: normal"> Solution </dt>
        <ul class = "inner">
-         <li> Each tasks forms its own contribution to output </li>
-         <li> Communicate (via messages) and add contributions (a reduction) </li>
-         <li> Single MPI task performs output to file </li>
+         <li> Each task forms its own contribution to (replicated) output</li>
+         <li> Communicate to add contributions </li>
+         <li> Single MPI task performs actual output to file </li>
        </ul>
     </dl>
 
-  </section>
-
-
-
-  <section>
-    <h4> Chemistry </h4>
-
-    <dl style = "font-size: 80%;">
-    <dt style = "font-weight: normal"> Problem </dt>
-       <ul class = "inner">
-         <li> Chemistry performed on an Eulerian grid, so ... </li>
-         <li> All particles in a given Eulerian cell must be present
-              on same MPI task</li>
-       </ul>
-     </dl>
-
-    <dl class = "fragment" style = "font-size: 80%; margin-top: 1em;">
-    <dt style = "font-weight: normal"> Solution </dt>
-       <ul class = "inner">
-         <li> Distribution of particles must respect particle position
-         <li> Source generates particles on relevant MPI task
-         <li> Particles which move may have to be moved between MPI tasks
-       </ul>
-     </dl>
-
-  </section>
-
-  <section>
-
-    <h4> Domain Decomposition</h4>
-
-    <img class = "plain" src = "./path1.svg" alt = "Particle changes MPI task">
-
-    <dl style = "font-size: 80%">
-      <dt style = "font-weight: normal;"> In fact:</dt>
-      <ul class = "inner">
-      <li> Group all particles crossing a particular
-                                boundary into single message</li>
-     </ul>
-     </dl>
-
-  </section>
-
-  <section>
-
-    <h4> Other concerns </h4>
-
-    <p style = "font-size: 80%"> Reproducability </p>
-    <ul style = "font-size: 80%; display: block; float: left; width: 100%">
-      <li> Code gives same result independent of threads/tasks </li>
-      <li> But not the same result as previous versions ...</li>
-        <ul class = "inner">
-          <li> Random number generator initialisation per particle </li>
-          <li> Serial algorithms replaced by parallel algorithms </li>
-        </ul>
-    </ul>
-
-    <p style = "font-size: 80%; margin-top: 6em;"> Efficiency </p>
-    <ul style = "font-size: 80%; display: block; float: left; width: 100%">
-      <li> Speed up is limited by the fraction of code that is serial </li>
-        <ul class = "inner">
-          <li> Speed up usually:   $S = T_1 / T_N$ </li>
-          <li> (Parallel) Efficiency: $E = S / N$ </li>
-        </ul>
-    </ul>
-
-    
   </section>
 
   <section>
@@ -249,8 +254,116 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
          alt = "Thread and task efficiency" class = "plain">
   </section>
 
+  <section>
+
+    <h4> Chemistry </h4>
+
+    <dl style = "font-size: 80%;">
+    <dt style = "font-weight: normal"> Problem </dt>
+       <ul class = "inner">
+         <li> Chemistry performed on an Eulerian grid, so ... </li>
+         <li> All particles in a given Eulerian cell must be present
+              on same MPI task</li>
+       </ul>
+     </dl>
+
+    <img width = "90%" src = "./chemistry.jpg"
+         alt = "Chemistry scheeatic" class = "plain">
+
+  </section>
+
 
   <section>
+
+     <img width = "80%"
+          src = "https://upload.wikimedia.org/wikipedia/commons/9/97/Caricature_gillray_plumpudding.jpg"
+          alt = "James Gillray cartoon showing Pitt and Napoleon">
+
+      <br>
+      <p style = "font-size: 30%; text-align: center;">
+         Reference: https://upload.wikimedia.org/wikipedia/commons/9/97/Caricature_gillray_plumpudding.jpg </p> 
+
+  </section>
+
+  <section>
+    <h4> Some machinery </h4>
+
+    <dl style = "font-size: 80%;">
+    <dt style = "font-weight: normal"> Particle memory management </dt>
+       <ul class = "inner">
+         <li> Complete re-write </li>
+         <li> Separate from application concerns </li>
+       </ul>
+     </dl>
+
+    <dl style = "font-size: 80%; margin-top: 1em;">
+    <dt style = "font-weight: normal"> MPI data types </dt>
+       <ul class = "inner">
+         <li> For <code>Particle_</code> structure </li>
+         <li> Also some components therein</li>
+         <li> Used to form messages </li>
+       </ul>
+     </dl>
+
+    <dl style = "font-size: 80%; margin-top: 1em;">
+    <dt style = "font-weight: normal"> Patches </dt>
+       <ul class = "inner">
+         <li> Auxiliary list of particles for decomposition </li>
+         <li> Helps to sort particles in horizontal and vertical </li>
+         <li> (Uses Peano-Hilbert order in horizontal for potential load balance) </li>
+       </ul>
+     </dl>
+
+  </section>
+
+
+  <section>
+    <h4> Recall... </h4>
+
+    <img src = "./schematic2.svg" alt = "Schematic" width = "90%"
+         class = "plain">
+
+  </section>
+
+  <section>
+    <h4> Domain decomposition </h4>
+
+    <p style = "font-size: 80%"> A copy of the source generates all particles... </p>
+
+    <pre><code class = "fortran" data-trim data-noescape>
+    ! Based on initial particle position (x,y,z)
+
+    if (isEulerian) then
+      ! Assign to horizontal patch based on (x,y)
+    else
+      ! Don't care...
+      ! Assign to horizontal patch based on iUP 
+    end if
+
+    </code></pre>
+
+  </section>
+
+
+  <section>
+
+    <h4> Particle movement ...</h4>
+
+    <img class = "plain" src = "./path1.svg" alt = "Particle changes MPI task">
+
+    <dl style = "font-size: 80%">
+      <dt style = "font-weight: normal;"> In fact:</dt>
+      <ul class = "inner">
+      <li> Group all particles crossing a particular
+                                boundary into single message</li>
+     </ul>
+     </dl>
+
+  </section>
+
+
+  <section>
+
     <h4> Chemistry Benchmark </h4>
 
     <ul style = "font-size: 80%; display: block; float: left; width: 100%">
@@ -265,19 +378,105 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
          alt = "Thread and task efficiency" class = "plain">
   </section>
 
-  <section>
-    <h4> Greenhouse Gas Benchmark </h4>
 
-    <ul style = "font-size: 70%; display: block; float: left; width: 100%">
-       <li> UK plus surrounding region (backwards in time)
+  <section>
+
+    <h4> Development </h4>
+
+    <p style = "font-size: 80%;"> Strategy </p>
+
+    <ul style = "font-size: 80%; display: block; float: left; width: 100%">
+      <li> "Staged de-replication" </li>
         <ul class = "inner">
-          <li> NWP data: 1.5km, 57 vertical levels at 1 hour </li>
-          <li> Original 480,000 particles (c. 30 minutes 1 node); 48 million < 4 hours </li>
+          <li> Refactored output/errors (everything else replicated) </li>
+          <li> Run multiple redundant copies (single output) </li>
         </ul>
     </ul>
 
-    <img width = "90%" src = "./fig-bench-greenhouse.svg"
-         alt = "Efficiency for different problem size" class = "plain">
+    <p style = "font-size: 80%; margin-top: 5em;"> Reproducability </p>
+
+    <ul style = "font-size: 80%; display: block; float: left; width: 100%">
+      <li> Code gives same result independent of threads/tasks </li>
+      <li> But not the same result as previous versions ...</li>
+        <ul class = "inner">
+          <li> Random number generator initialisation per particle </li>
+          <li> Serial algorithms replaced by parallel algorithms </li>
+        </ul>
+    </ul>
+    
+  </section>
+
+
+  <section>
+
+    <h4> Testing </h4>
+
+    <p style = "font-size: 80%;"> No tests exsited in original (!)</p>
+
+    <ul style = "font-size: 80%; display: block; float: left; width: 100%">
+      <li> A number of levels introduced </li>
+        <ul class = "inner">
+          <li> Assertions to enforce design-by-contract </li>
+          <li> Unit tests for new functionality </li>
+          <li> A number of standard (performance) benchmarks for repeatability </li>
+        </ul>
+    </ul>
+
+    <ul style = "font-size: 80%; display: block; float: left; width: 100%">
+      <li> Quality </li>
+        <ul class = "inner">
+          <li> No warnings with <code>gfortran -Wall</code> (new/refactored code)</li>
+          <li> Portability: GNU, NAG, Intel, Cray, (Windows?)</li>
+          <li> Review by Met Office before introduction in trunk </li>
+        </ul>
+    </ul>
+
+  </section>
+
+
+  <section>
+
+    <h4> Assertions </h4>
+
+    <pre class = "stretch" style = "font-size: 50%">
+    <code class = "fortran" data-trim data-noescape>
+  pure function patchXYIndex(patches, iXPH, iYPH) result(iPatchGlobal)
+
+    ! Map patch (iXPH, iYPH) to one-dimensional patch index.
+
+    type (Patches_), intent(in) :: patches
+    integer,         intent(in) :: iXPH
+    integer,         intent(in) :: iYPH
+    integer                     :: iPatchGlobal
+
+    assert(1 <= iXPH .and. iXPH <= patches%nxPH)
+    assert(1 <= iYPH .and. iYPH <= patches%nyPH)
+
+    iPatchGlobal = peanoHilbert2DTo1D(patches%nPH, iXPH, iYPH)
+
+    assert(1 <= iPatchGlobal .and. iPatchGlobal <= patches%nGlobal)
+
+  end function patchXYIndex
+    </code></pre>
+
+  <p style = "font-size: 80%">
+  Implementation via pre-processor macro
+  </p>
+
+  </section>
+
+
+
+  <section>
+    <h4> Unit tests </h4>
+
+    <p style = "font-size: 80%">
+    Stand-alone unit tests run for new functionality (MPI/threads) 
+    </p>
+
+    <p style = "font-size: 80%">
+    Coverage assessed via <code>gcov</code> and <code>lcov</code>
+    <a href = "file:///Users/kevin/work/ecdf-svn/kevin/trunk/name/refactor/tests/coverage/index.html">test report</a></p>
 
   </section>
 
@@ -326,43 +525,16 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
   <section>
   </section>
   <section>
-    <h4> Additional slides...</h4>
-  </section>
+    <h4> Credits </h4>
 
+    <p> UKMO:
 
-
-  <section>
-    <h4> Data Structures</h4>
-
-    <pre><code class = "fortran" data-trim>
-       type (Particle_)
-         integer (int64)        :: iUP     ! unique identifier
-         real    (pos_t)        :: x(3)    ! position
-         integer (int32)        :: iCoord  ! coordinate system
-         ...
-         type (Extra_), pointer :: extra   ! optional extra data
-         double  (real64)       :: mass(:) ! chemical species
-       end type Particle_
-    </code></pre>
-
-  <p style = "font-size: 80%">
-  Memory requirement
-  </p>
-  <pre><code class = "fortran" data-trim>
-    Particle_  ! c. 128 bytes
-    Extra_     ! c. 400 bytes (if required)
-    mass(:)    ! typically 42 species (if required)
-  </code></pre>
+    <p> Photo: Arni Frioriksson
+    <p>
+https://commons.wikimedia.org/wiki/File:Eyjafjallajokull-April-17.JPG
 
   </section>
 
-  <section>
-    <h4> Tests </h4>
-
-    <p style = "font-size: 80%">
-    Link to <a href = "file:///Users/kevin/work/ecdf-svn/kevin/trunk/name/refactor/tests/coverage/index.html">test coverage</a></p>
-
-  </section>
 
 </div>
 </div>

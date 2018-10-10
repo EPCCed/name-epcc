@@ -258,6 +258,9 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
 
     <h4> Chemistry </h4>
 
+    <img width = "90%" src = "./chemistry.jpg"
+         alt = "Chemistry scheeatic" class = "plain">
+
     <dl style = "font-size: 80%;">
     <dt style = "font-weight: normal"> Problem </dt>
        <ul class = "inner">
@@ -266,9 +269,6 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
               on same MPI task</li>
        </ul>
      </dl>
-
-    <img width = "90%" src = "./chemistry.jpg"
-         alt = "Chemistry scheeatic" class = "plain">
 
   </section>
 
@@ -360,6 +360,39 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
      </dl>
 
   </section>
+
+
+
+  <section>
+    <h4> Chemistry parallelisation</h4>
+
+    <dl style = "font-size: 80%;">
+    <dt style = "font-weight: normal"> Eulerian concentrations </dt>
+       <ul class = "inner">
+         <li> Storage remains replicated </li>
+         <li> Work (domain-) distributed </li>
+       </ul>
+     </dl>
+
+    <dl style = "font-size: 80%; margin-top: 1em;">
+    <dt style = "font-weight: normal"> Threaded parallelisation </dt>
+       <ul class = "inner">
+         <li> Implementation completely rewritten </li>
+         <li> Based on patch structure (e.g., sorting in vertical) </li>
+         <li> Scheduling/synchonisation issues removed (identified via profile)</li>
+       </ul>
+     </dl>
+
+    <dl style = "font-size: 80%; margin-top: 1em;">
+    <dt style = "font-weight: normal"> Updated concentrations </dt>
+       <ul class = "inner">
+         <li> Gather to rank 0 for output </li>
+         <li>Eulerian physical processes/advection not considered </li>
+       </ul>
+     </dl>
+
+  </section>
+
 
 
   <section>
@@ -474,9 +507,14 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
     Stand-alone unit tests run for new functionality (MPI/threads) 
     </p>
 
+    <ul style = "font-size: 80%; display: block; float: left; width: 100%">
+      <li> Coverage assessed via <code>gcov</code> </li>
+      <li> e.g., <code>gfortran --covergage </code> </li>
+      <li> <code>lcov</code> produces a
+           <a href = "file:///Users/kevin/work/ecdf-svn/kevin/trunk/name/refactor/tests/coverage/index.html">test report</a></li>
+    </ul>
+
     <p style = "font-size: 80%">
-    Coverage assessed via <code>gcov</code> and <code>lcov</code>
-    <a href = "file:///Users/kevin/work/ecdf-svn/kevin/trunk/name/refactor/tests/coverage/index.html">test report</a></p>
 
   </section>
 
@@ -524,14 +562,29 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
 
   <section>
   </section>
+
   <section>
     <h4> Credits </h4>
 
-    <p> UKMO:
+    <p> At UK Met Office
+    <ul style = "font-size: 80%; display: block; float: left; width: 100%">
+      <li> Dave Thomson (Science lead) </li>
+      <li> Ben Devenish (Benchmarks/Volcanos)</li>
+      <li> Andrew Jones (Software/tests) </li>
+      <li> Ben Evans (Project lead) </li>
+    </ul>
+
+  </section>
+
+  <section>
+    <h4> Credits </h4>
 
     <p> Photo: Arni Frioriksson
-    <p>
+    <p style = "font-size: 70%">
+<a href =
+"https://commons.wikimedia.org/wiki/File:Eyjafjallajokull-April-17.JPG">
 https://commons.wikimedia.org/wiki/File:Eyjafjallajokull-April-17.JPG
+</a>
 
   </section>
 

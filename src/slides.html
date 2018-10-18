@@ -28,6 +28,7 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
 <div class="reveal">
 <div class="slides">
 
+
   <section>
     <h4> Overview </h4>
 
@@ -585,6 +586,142 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );
 "https://commons.wikimedia.org/wiki/File:Eyjafjallajokull-April-17.JPG">
 https://commons.wikimedia.org/wiki/File:Eyjafjallajokull-April-17.JPG
 </a>
+
+  </section>
+
+
+
+  <section>
+    <h4> Improving performance of Met Office NAME code</h4>
+
+    <h4 style = "text-align: center"> Kevin Stratford (Proposal: IP07) </h4>
+
+    <img src = "Eyjafjallajokull-April-17.jpg"
+         alt = "Eyjafjallajokull Eruption April 2010 (Photo: Arni Frioriksson)"
+         width = "90%"
+         class = "plain">
+
+
+    <ul style = "font-size: 75%; display: block; float: left; width: 100%">
+      <li> Background </li>
+        <ul class = "inner">
+          <li> Run operationally and for research </li>
+          <li> Based on particles </li>
+        </ul>
+      <li> What's needed </li>
+        <ul class = "inner">
+           <li> Fortran / OpenMP </li>
+           <li> Running tests and benchmarks / assessing performance </li>
+        </ul>
+    </ul>
+
+  </section>
+
+
+  <section>
+    <h4> Improving performance of Met Office NAME code</h4>
+
+
+    <div style = "width: 50%; border: 1px solid white; float: left;">
+
+    <pre style = "font-size: 50%">
+    <code class = "fortran" data-trim data-noescape>
+       type (Particle_)
+         integer (int64) :: iUP
+         real    (pos_t) :: x(3)
+         integer (int32) :: iCoord
+         .
+         .
+         .
+       end type Particle_
+    </code></pre>
+
+    <img src = "./array1.svg" alt = "An array of particles in memory"
+         class = "plain" width = "90%">
+    </div>
+
+    <div style = "width: 50%; float: right; margin-top: -365px;
+                  border: 1px solid white;">
+
+
+    <pre class = "fragment" style = "font-size: 50%">
+    <code class = "fortran" data-trim data-noescape>
+       type (ParticleArray_)
+         integer (int64) :: iUP(:)
+         real    (pos_t) :: x(3,:)
+         integer (int32) :: iCoord(:)
+         .
+         .
+         .
+       end type ParticleArray_
+    </code></pre>
+
+    </div>
+
+    <div style = "width: 100%; clear: both;">
+
+
+    <ul style = "font-size: 90%; display: block; float: left; width: 100%">
+      <li> What's in it for me? </li>
+        <ul class = "inner">
+          <li> Experience working on a real code </li>
+          <li> Met Office are engaged and interested in the work </li>
+        </ul>
+    </ul>
+
+    </div>
+
+  </section>
+
+
+  <section>
+  </section>
+
+
+  <section>
+
+    <h4> Performance portability ...</h4>
+
+    <h4 style = "text-align: center"> Kevin Stratford (Proposal: EP28) </h4>
+
+    <ul style = "font-size: 95%; display: block; float: left; width: 100%">
+      <li> Problem </li>
+        <ul class = "inner">
+          <li> Want to run on both CPU and GPU </li>
+          <li> Can we do it without writing two versions of the source code?</li>
+        </ul>
+      <li> Solution </li>
+        <ul class = "inner">
+           <li> Need abstraction of the thread model / memory layout</li>
+           <li> Various ways are available... (we have "targetDP") </li>
+        </ul>
+    </ul>
+
+  </section>
+
+  <section>
+    <h4> ... simulation of particle suspensions</h4>
+
+    <h4 style = "text-align: center"> Kevin Stratford (Proposal: EP28) </h4>
+
+    <ul style = "font-size: 95%; display: block; float: left; width: 100%">
+      <li> CFD code "Ludwig" </li>
+        <ul class = "inner">
+          <li> Some areas of code abstracted </li>
+          <li> Want to extend to full coverage of moving particles </li>
+        </ul>
+      <li> Skills </li>
+        <ul class = "inner">
+           <li> Must be happy with C / pointers / data structures </li>
+           <li> OpenMP / GPU knowledge a plus</li>
+        </ul>
+      <li> What's in it for me? </li>
+        <ul class = "inner">
+           <li> A key, growth, area in scientific computing </li>
+           <li> Practical experience with world-class research code </li>
+        </ul>
+
+    </ul>
 
   </section>
 
